@@ -30,7 +30,7 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
 // ThingSpeak Settings
 char thingSpeakAddress[] = "api.thingspeak.com";
-const int thingSpeakInterval = 16 * 1000; // Time interval in milliseconds to get data from ThingSpeak (number of seconds * 1000 = interval)
+const int thingSpeakInterval = 24 * 1000; // Time interval in milliseconds to get data from ThingSpeak (number of seconds * 1000 = interval)
 long lastConnectionTime = 0;  // For ThingSpeak refresh
 int failedCounter = 0;  // How many web client attempts before we freak out
 
@@ -61,12 +61,12 @@ void loop() {
       if (gogo) {
         // this is good content
         response.concat(charIn); // append that char to the string response
-        lcd.setCursor(15,0);
-        lcd.print("B");  // Body
+        // lcd.setCursor(15,0);
+        // lcd.print("B");  // Body
       } else {
         // This is a bunch of http header uselessness
-        lcd.setCursor(15,0);
-        lcd.print("H");  // Header
+        // lcd.setCursor(15,0);
+        // lcd.print("H");  // Header
         prevChar[3] = prevChar[2];
         prevChar[2] = prevChar[1];
         prevChar[1] = prevChar[0];
@@ -103,12 +103,14 @@ void loop() {
       // we're connected to something, uhm, how?
       lcd.setCursor(15,0);
       lcd.print("!");
-      delay(200);
+      delay(500);
     }
   } else {
     // chill here for a bit, the mainstay of our Arduino Cheerlights lifetime
     uptime();  // update the LCD to show we're not frozen
     delay(500);
+    lcd.setCursor(14,0);
+    lcd.print("  ");  // happy that it worked
   }
   // Check if Arduino Ethernet needs to be restarted
   if (failedCounter > 3 ) {
@@ -128,7 +130,7 @@ void connectThingSpeak() {
     client.println("GET /channels/1417/field/1/last.txt HTTP/1.1");
     client.println("Host: api.thingspeak.com");
     client.println("Accept: text/html, plain/text");
-    client.println("User-Agent: Arduino Cheerlights)");
+    client.println("User-Agent: Presence's Arduino Cheerlights (presence@irev.net)");
     client.println();
     lastConnectionTime = millis();
   } else {
@@ -141,37 +143,37 @@ void connectThingSpeak() {
 
 void processLightCommand(String &response) {
   if (response.indexOf("white") > 0) {
-    lastCommand = "white";
+    lastCommand = "WHITE";
     showStatus(lastCommand,WHITE);
   } else if (response.indexOf("black") > 0) {
-    lastCommand = "black";
+    lastCommand = "BLACK";
     showStatus(lastCommand,OFF);
   } else if (response.indexOf("red") > 0) {
-    lastCommand = "red";
+    lastCommand = "RED";
     showStatus(lastCommand,RED);
   } else if (response.indexOf("green") > 0) {
-    lastCommand = "green";
+    lastCommand = "GREEN";
     showStatus(lastCommand,GREEN);
   } else if (response.indexOf("blue") > 0) {
-    lastCommand = "blue";
+    lastCommand = "BLUE";
     showStatus(lastCommand,BLUE);
   } else if (response.indexOf("cyan") > 0) {
-    lastCommand = "cyan";
+    lastCommand = "CYAN";
     showStatus(lastCommand,TEAL);
   } else if (response.indexOf("magenta") > 0) {
-    lastCommand = "magenta";
+    lastCommand = "MAGENTA";
     showStatus(lastCommand,PURP);
   } else if (response.indexOf("yellow") > 0) {
-    lastCommand = "yellow";
+    lastCommand = "YELLOW";
     showStatus(lastCommand,YELLOW);
   } else if (response.indexOf("purple") > 0) {
-    lastCommand = "purple";
+    lastCommand = "PURPLE";
     showStatus(lastCommand,PURP);
   } else if (response.indexOf("orange") > 0) {
-    lastCommand = "orange";
+    lastCommand = "ORANGE";
     showStatus(lastCommand,YELLOW);
   } else if (response.indexOf("warmwhite") > 0) {
-    lastCommand = "warmwhite";
+    lastCommand = "WARM WHITE";
     showStatus(lastCommand,WHITE);
   } else {
     lastCommand = "(no match)";
