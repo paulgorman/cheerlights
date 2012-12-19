@@ -133,7 +133,7 @@ void processLightCommand(String &response) {
     analogWrite(greenPin,0);
     analogWrite(bluePin,0);
   } else if (response.indexOf("magenta") > 0) {
-    analogWrite(redPin,0);
+    analogWrite(redPin,64);
     analogWrite(greenPin,255);
     analogWrite(bluePin,0);
   } else if (response.indexOf("yellow") > 0) {
