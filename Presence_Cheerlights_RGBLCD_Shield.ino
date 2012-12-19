@@ -59,10 +59,11 @@ void loop() {
     while(client.available() > 0) {
       charIn = client.read(); // read a char from the ethernet buffer
       if (gogo) {
-        // this is good content
-        response.concat(charIn); // append that char to the string response
-        // lcd.setCursor(15,0);
-        // lcd.print("B");  // Body
+        if (sizeof(response) < 50) { // Limit the response String object to only 50 characters.
+          response.concat(charIn); // append that char to the string response
+          // lcd.setCursor(15,0);
+          // lcd.print("B");  // Body
+        }
       } else {
         // This is a bunch of http header uselessness
         // lcd.setCursor(15,0);
@@ -77,9 +78,14 @@ void loop() {
         }
       }
     }
-    processLightCommand(response);  // Send the http response body content over to parse for a color
-    lcd.setCursor(15,1);
-    lcd.print("  ");  // Wipe out any extra notice flags
+    if (sizeof(response) < 49) {  // if the response buffer is huge, then it was an error page.
+      processLightCommand(response);  // Send the http response body content over to parse for a color
+      lcd.setCursor(15,1);
+      lcd.print("  ");  // Wipe out any extra notice flags
+    } else {
+      lcd.setCursor(15,1);
+      lcd.print("X");  // This CheerLights query attempt 503'd on us, probably.
+    } 
     // now disconnect from the webserver, if they haven't already disconnected us.
     if (client.connected()) {
       lcd.setCursor(14,0);
