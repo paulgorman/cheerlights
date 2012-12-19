@@ -62,14 +62,8 @@ void loop() {
       Serial.println(response);
     }
     // now disconnect from the webserver, if they haven't already disconnected us.
-    if (client.connected()) {
-      client.flush();  // ignore any remaining content I missed earlier
-      client.stop();  // disconnect from the webserver
-    } else {
-      // webserver didn't disconnect us, probably using KeepAlive
-      client.flush();  // ignore any remaining content may have missed earlier
-      client.stop();  // disconnect from the web server, redundantly
-    }
+    client.flush();  // ignore any remaining content I missed earlier
+    client.stop();  // disconnect from the webserver
   }
   // is it time to update color status?
   if(millis() - lastConnectionTime > thingSpeakInterval) {
