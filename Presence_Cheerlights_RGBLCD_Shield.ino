@@ -1,5 +1,5 @@
 // Presence's attempt at an Arduino Ethernet + Adafruit RGB LCD Shield + CheerLights
-// 20121218 presence@irev.net
+// 20121220 https://github.com/paulgorman/cheerlights
 // Most notable challenge was that I use the String object to pull apart content, and I kept running out of RAM after a few loops.
 // Also using HTTP/1.1 to protect against VirtualHost same-IP webhosts
 
@@ -172,7 +172,7 @@ void processLightCommand(String &response) {
   }
 }
 
-void showStatus(String &msg, int bgColor) {
+void showStatus(String msg, int bgColor) {
   uptime();
   lcd.setBacklight(bgColor);
   lcd.setCursor(0,1);
@@ -246,3 +246,4 @@ int freeRam () {
   int v; 
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
+
