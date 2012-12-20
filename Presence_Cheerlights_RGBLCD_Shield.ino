@@ -187,7 +187,7 @@ void processLightCommand(String &response) {
   }
 }
 
-void showStatus(String msg, int bgColor) {
+void showStatus(String &msg, int bgColor) {
   uptime();
   lcd.setBacklight(bgColor);
   lcd.setCursor(0,1);
@@ -206,24 +206,28 @@ void stopEthernet() {
 }
 
 void startEthernet() {
-  if (Ethernet.begin(mac) == 0) {
-    showStatus("DHCP Fail, Reset Plz!",RED);
-  } else {
-    // give the Ethernet shield a second to initialize:
-    lcd.setCursor(0,1);
-    lcd.print("Initializing... ");
-    delay(1000);
-    for (byte thisByte = 0; thisByte < 4; thisByte++) {
-      // print the value of each byte of the IP address:
-      tempbuff.concat(String(Ethernet.localIP()[thisByte], DEC));
-      tempbuff.concat(".");
-    }  
-    lcd.setCursor(0,1);
-    tempbuff.concat("      ");
-    lcd.print(tempbuff.substring(0,16));
-    tempbuff = "";
-    delay(200);
+  if(Ethernet.begin(mac) == 0) {
+  	do {
+		showStatus("DHCP Failed- Waiting",RED);
+	    delay(1000);
+		showStatus("DHCP Failed- Retrying",RED);
+	} while(Ethernet.maintain() & 0x0101);
   }
+
+  // give the Ethernet shield a second to initialize:
+  lcd.setCursor(0,1);
+  lcd.print("Initializing... ");
+  delay(1000);
+  for (byte thisByte = 0; thisByte < 4; thisByte++) {
+	// print the value of each byte of the IP address:
+	tempbuff.concat(String(Ethernet.localIP()[thisByte], DEC));
+	tempbuff.concat(".");
+  }  
+  lcd.setCursor(0,1);
+  tempbuff.concat("      ");
+  lcd.print(tempbuff.substring(0,16));
+  tempbuff = "";
+  delay(200);
 }
 
 void uptime() {
