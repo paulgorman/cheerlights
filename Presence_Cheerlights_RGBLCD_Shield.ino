@@ -59,7 +59,7 @@ void loop() {
     while(client.available() > 0) {
       charIn = client.read(); // read a char from the ethernet buffer
       if (gogo) {
-        if (sizeof(response) < 50) { // Limit the response String object to only 50 characters.
+        if (response.length() < 50) { // Limit the response String object to only 50 characters.
           response.concat(charIn); // append that char to the string response
           // lcd.setCursor(15,0);
           // lcd.print("B");  // Body
@@ -78,7 +78,7 @@ void loop() {
         }
       }
     }
-    if (sizeof(response) < 49) {  // if the response buffer is huge, then it was an error page.
+    if (response.length() < 49) {  // if the response buffer is huge, then it was an error page.
       processLightCommand(response);  // Send the http response body content over to parse for a color
       lcd.setCursor(15,1);
       lcd.print("  ");  // Wipe out any extra notice flags
