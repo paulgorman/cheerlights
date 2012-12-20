@@ -29,18 +29,17 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 #define WHITE 0x7
 
 // ThingSpeak Settings
-char thingSpeakAddress[] = "api.thingspeak.com";
 const int thingSpeakInterval = 24 * 1000; // Time interval in milliseconds to get data from ThingSpeak (number of seconds * 1000 = interval)
 long lastConnectionTime = 0;  // For ThingSpeak refresh
 int failedCounter = 0;  // How many web client attempts before we freak out
 
 const char headerBreak[] = { 13, 10 };  // what separates http header from body, \r\n
 
-
 void setup() {
   lcd.begin(16, 2);
   showStatus("Presence Cheer",WHITE);
   startEthernet();  // this really should only happen once.  If the web breaks, then reset the arduino manually.
+  lastConnectionTime = millis();
 }
 
 void loop() {
@@ -126,7 +125,7 @@ void loop() {
 } // End loop
 
 void connectThingSpeak() {
-  if (client.connect(thingSpeakAddress, 80)) {
+  if (client.connect("api.thingspeak.com", 80)) {
     lcd.setCursor(14,0);
     lcd.print("C ");
     failedCounter = 0;
@@ -135,13 +134,12 @@ void connectThingSpeak() {
     client.println("Accept: text/html, plain/text");
     client.println("User-Agent: Presence's Arduino Cheerlights (presence@irev.net)");
     client.println();
-    lastConnectionTime = millis();
   } else {
     failedCounter++;
     lcd.setCursor(14,0);
     lcd.print("F"+String(failedCounter, DEC));
-    lastConnectionTime = millis();
   }
+  lastConnectionTime = millis();
 }
 
 void processLightCommand(String &response) {
@@ -191,21 +189,27 @@ void stopEthernet() {
 }
 
 void startEthernet() {
-  if(Ethernet.begin(mac) == 0) {
-  	do {
-		showStatus("DHCP Failed- Waiting",RED);
-	    delay(1000);
-		showStatus("DHCP Failed- Retrying",RED);
-	} while(Ethernet.maintain() & 0x0101);
-  }
-
-  // give the Ethernet shield a second to initialize:
   lcd.setCursor(0,1);
   lcd.print("Initializing... ");
+  if(Ethernet.begin(mac) == 0) {
+    do {
+      showStatus("DHCP Failed- Waiting",RED);
+      delay(1000);
+      showStatus("DHCP Failed- Retrying",RED);
+    } while(Ethernet.maintain() & 0x0101);
+  }
+  // give the Ethernet shield a second to initialize:
   delay(1000);
   lcd.setCursor(0,1);
-  lcd.print(Ethernet.localIP() + "      ");
-  delay(200);
+  String tempbuff = String("");
+  for (byte thisByte = 0; thisByte < 4; thisByte++) {
+    // print the value of each byte of the IP address:
+    tempbuff.concat(String(Ethernet.localIP()[thisByte], DEC));
+    tempbuff.concat(".");
+  }
+  tempbuff.concat("    ");
+  lcd.setCursor(0,1);
+  lcd.print(tempbuff.substring(0,16));
 }
 
 void uptime() {
