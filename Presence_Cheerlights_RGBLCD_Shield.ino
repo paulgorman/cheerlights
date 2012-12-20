@@ -34,10 +34,8 @@ const int thingSpeakInterval = 24 * 1000; // Time interval in milliseconds to ge
 long lastConnectionTime = 0;  // For ThingSpeak refresh
 int failedCounter = 0;  // How many web client attempts before we freak out
 
-// LCD Screen Settings
-String lastCommand = "";  // Buffer for the color command
-String tempbuff = String();  // LCD Screen Text
-String uptimeDisplay = String();  // Arduino Uptime  // I love seeing how long the little critter runs for
+const char headerBreak[] = { 13, 10 };  // what separates http header from body, \r\n
+
 
 void setup() {
   lcd.begin(16, 2);
@@ -52,7 +50,6 @@ void loop() {
     lcd.print("R");  // Receiving data
     String response = String("");  // seriously, the most amazing RAM leak
     char charIn;  // incoming byte from the http result
-    char headerBreak[] = { 13, 10 };  // what separates http header from body, \r\n
     char prevChar[4];  // buffer of characters to compare with the headerbreak characters
     boolean gogo = false;  // when its okay to start reading into the result String object
     delay(100);  // allow time for the etherweb module receive all the content
@@ -149,41 +146,29 @@ void connectThingSpeak() {
 
 void processLightCommand(String &response) {
   if (response.indexOf("white") > 0) {
-    lastCommand = "WHITE";
-    showStatus(lastCommand,WHITE);
+    showStatus("WHITE",WHITE);
   } else if (response.indexOf("black") > 0) {
-    lastCommand = "BLACK";
-    showStatus(lastCommand,OFF);
+    showStatus("BLACK",OFF);
   } else if (response.indexOf("red") > 0) {
-    lastCommand = "RED";
-    showStatus(lastCommand,RED);
+    showStatus("RED",RED);
   } else if (response.indexOf("green") > 0) {
-    lastCommand = "GREEN";
-    showStatus(lastCommand,GREEN);
+    showStatus("GREEN",GREEN);
   } else if (response.indexOf("blue") > 0) {
-    lastCommand = "BLUE";
-    showStatus(lastCommand,BLUE);
+    showStatus("BLUE",BLUE);
   } else if (response.indexOf("cyan") > 0) {
-    lastCommand = "CYAN";
-    showStatus(lastCommand,TEAL);
+    showStatus("CYAN",TEAL);
   } else if (response.indexOf("magenta") > 0) {
-    lastCommand = "MAGENTA";
-    showStatus(lastCommand,PURP);
+    showStatus("MAGENTA",PURP);
   } else if (response.indexOf("yellow") > 0) {
-    lastCommand = "YELLOW";
-    showStatus(lastCommand,YELLOW);
+    showStatus("YELLOW",YELLOW);
   } else if (response.indexOf("purple") > 0) {
-    lastCommand = "PURPLE";
-    showStatus(lastCommand,PURP);
+    showStatus("PURPLE",PURP);
   } else if (response.indexOf("orange") > 0) {
-    lastCommand = "ORANGE";
-    showStatus(lastCommand,YELLOW);
+    showStatus("ORANGE",YELLOW);
   } else if (response.indexOf("warmwhite") > 0) {
-    lastCommand = "WARM WHITE";
-    showStatus(lastCommand,WHITE);
+    showStatus("WARM WHITE",WHITE);
   } else {
-    lastCommand = "(no match)";
-    showStatus(lastCommand + response,BLUE);
+    showStatus("(no match)" + response,BLUE);
   }
 }
 
@@ -218,15 +203,8 @@ void startEthernet() {
   lcd.setCursor(0,1);
   lcd.print("Initializing... ");
   delay(1000);
-  for (byte thisByte = 0; thisByte < 4; thisByte++) {
-	// print the value of each byte of the IP address:
-	tempbuff.concat(String(Ethernet.localIP()[thisByte], DEC));
-	tempbuff.concat(".");
-  }  
   lcd.setCursor(0,1);
-  tempbuff.concat("      ");
-  lcd.print(tempbuff.substring(0,16));
-  tempbuff = "";
+  lcd.print(Ethernet.localIP() + "      ");
   delay(200);
 }
 
@@ -243,31 +221,21 @@ void uptime() {
   mins=mins-(hours*60); //subtract the coverted minutes to hours in order to display 59 minutes max
   hours=hours-(days*24); //subtract the coverted hours to days in order to display 23 hours max
   lcd.setCursor(0,0);
-  uptimeDisplay = "";
   if (days>0) {
     lcd.print(String(days));
     lcd.print("d,");
-    uptimeDisplay.concat(String(days));
-    uptimeDisplay.concat("d,");
   }
   lcd.print(hours);
-  uptimeDisplay.concat(hours);
   lcd.print(":");
-  uptimeDisplay.concat(":");
   if (mins < 10) {
     lcd.print("0");
-    uptimeDisplay.concat("0");
   }
   lcd.print(mins);
-  uptimeDisplay.concat(mins);
   lcd.print(":");
-  uptimeDisplay.concat(":");
   if (secs < 10) {
     lcd.print("0");
-    uptimeDisplay.concat("0");
   }
   lcd.print(secs);
-  uptimeDisplay.concat(secs);
   lcd.setCursor(13,1);
   lcd.print(freeRam());  // fascinated by how much free RAM there may be left on the Arduino
 }
