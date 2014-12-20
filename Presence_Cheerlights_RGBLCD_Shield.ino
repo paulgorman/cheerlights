@@ -1,7 +1,8 @@
 // Presence's attempt at an Arduino Ethernet + Adafruit RGB LCD Shield + CheerLights
-// 20121220 https://github.com/paulgorman/cheerlights
+// https://github.com/paulgorman/cheerlights
 // Most notable challenge was that I use the String object to pull apart content, and I kept running out of RAM after a few loops.
 // Also using HTTP/1.1 to protect against VirtualHost same-IP webhosts
+// 20141219 Copied to Codebender.cc for convenience in hacking in updates
 
 #include <SPI.h>
 #include <Ethernet.h>
@@ -133,6 +134,7 @@ void connectThingSpeak() {
     client.println("Host: api.thingspeak.com");
     client.println("Accept: text/html, plain/text");
     client.println("User-Agent: Presence's Arduino Cheerlights (presence@irev.net)");
+    client.println("Connection: close"); // make web server disconnect me
     client.println();
   } else {
     failedCounter++;
@@ -165,6 +167,10 @@ void processLightCommand(String &response) {
     showStatus("ORANGE",YELLOW);
   } else if (response.indexOf("warmwhite") > 0) {
     showStatus("WARM WHITE",WHITE);
+  } else if (response.indexOf("oldlace") > 0) {
+  	showStatus("OLD LACE",WHITE);
+  } else if (response.indexOf("pink") > 0) {
+  	showStatus("PINK",RED);
   } else {
     showStatus("(no match)" + response,BLUE);
   }
@@ -250,4 +256,5 @@ int freeRam () {
   int v; 
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
+
 
