@@ -10,6 +10,7 @@
 #include <ccspi.h>
 #include <SPI.h>
 #include <string.h>
+#include <avr/wdt.h>
  
 #define PIN 6  // Neopixels connect here
 #define Pixels 5  // Neopixel count
@@ -33,7 +34,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(Pixels, PIN, NEO_RGB + NEO_KHZ400);
 // On an UNO, SCK = 13, MISO = 12, and MOSI = 11
 Adafruit_CC3000 cc3000 = Adafruit_CC3000(ADAFRUIT_CC3000_CS, ADAFRUIT_CC3000_IRQ, ADAFRUIT_CC3000_VBAT,
                                          SPI_CLOCK_DIV2); // you can change this clock speed
-#define IDLE_TIMEOUT_MS  3000      // Amount of time to wait (in milliseconds) with no data
+#define IDLE_TIMEOUT_MS  3000		// Amount of time to wait (in milliseconds) with no data
 
 // Variable declarations
 long interval = 15 * 1000; // ms time to refresh CheerLights URL (60k is 1 minute)
@@ -52,6 +53,7 @@ void setup() {
 	strip.show(); // Initialize all pixels to 'off'
 	strip.setPixelColor(0,0,0,255); // starting up blue
 	strip.show();
+//	wdt_enable(WDTO_8S); // enable Arduino Watchdog reboot at max 8 seconds
 	if (!cc3000.begin()) {
 		strip.setPixelColor(0,255,0,0); // red for wifi shield failure
 		strip.show();
@@ -80,6 +82,7 @@ void loop () {
 	}
  	//color++;  // or whatever the current cheerlights is.  color++ just rainbow cycles
 	sparkle(color);
+	wdt_reset(); // Watchdog timer countdown is reset to full 8 seconds
 }
  
 void sparkle(int color) {
@@ -105,9 +108,19 @@ int getCheerLightsColor(int color) {
 	strip.show();
 	if (!cc3000.checkConnected()) {
 		// get back on Wifi
-		strip.setPixelColor(0,255,0,100); // Purple for Wifi Go
+		strip.setPixelColor(0,255,0,0); // Red for Wifi Restarting...
       	strip.show();
+      	delay(500);
+		cc3000.reboot();
+		delay(500);
+		strip.setPixelColor(0,255,150,0); // Orange for successful reboot.
+		strip.show();
+		cc3000.begin();
+		strip.setPixelColor(0,255,200,0); // yellow for stuck on init board
+		strip.show();
 		cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY);
+		strip.setPixelColor(0,255,255,102); // bright yellow for DHCP
+		strip.show();
 		while (!cc3000.checkDHCP()) {
       		strip.setPixelColor(0,255,102,0);
       		strip.show();
@@ -244,4 +257,3 @@ uint32_t Wheel(byte WheelPos, float opacity) {
     return strip.Color(0, (WheelPos * 3) * opacity, (255 - WheelPos * 3) * opacity);
   }
 }
-
