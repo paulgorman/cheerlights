@@ -2,7 +2,7 @@
  * Adafruit CC300 and 5 neopixels on an Arduino UNO
  * Christmas Tree Star
  * Sparkle nicely the current Cheerlights color
- * @presence
+ * @presence 20181204
  *************/
  
 #include <Adafruit_NeoPixel.h> // 5 Tree-topper lights (or 40 neopixel shield)
@@ -11,15 +11,14 @@
 #include <SPI.h>
 #include <string.h>
 #include <avr/wdt.h>
- 
+
 #define PIN 6  // Neopixels connect here
 #define Pixels 5  // Neopixel count
 #define WEBSITE      "api.thingspeak.com"
 #define WEBPAGE      "/channels/1417/field/1/last.txt"
-//#define WLAN_SSID       "SBP Guests"  // cannot be longer than 32 characters!
 #define WLAN_SSID       "iRev.net"  // cannot be longer than 32 characters!
-#define WLAN_PASS       ""
-#define WLAN_SECURITY   WLAN_SEC_UNSEC // WLAN_SEC_UNSEC, WLAN_SEC_WPA or WLAN_SEC_WPA2
+#define WLAN_PASS     "1234554321" // welcome to my home wifi, stranger!
+#define WLAN_SECURITY   WLAN_SEC_WPA2 // WLAN_SEC_UNSEC, WLAN_SEC_WPA or WLAN_SEC_WPA2
 
 // Use this Neopixel for normal Shields and Neopixels
 //Adafruit_NeoPixel strip = Adafruit_NeoPixel(Pixels, PIN, NEO_GRB + NEO_KHZ800);
@@ -49,6 +48,7 @@ uint32_t ip; // IP address
 
 void setup() {
 	Serial.begin(9600);  // debugging, but seemingly slows down the LED refresh
+	Serial.println("Starting...");
 	strip.begin();
 	strip.show(); // Initialize all pixels to 'off'
 	strip.setPixelColor(0,0,0,255); // starting up blue
@@ -57,20 +57,25 @@ void setup() {
 	if (!cc3000.begin()) {
 		strip.setPixelColor(0,255,0,0); // red for wifi shield failure
 		strip.show();
+		Serial.println("Wifi Board Failure");
 		while(1);
 	}
+	Serial.println("Seeking Wifi Network...");
 	if (!cc3000.connectToAP(WLAN_SSID, WLAN_PASS, WLAN_SECURITY)) {
-    	strip.setPixelColor(0,255,102,0); // orange for WTF Wifi
-    	strip.show();
-    	while(1);
+		strip.setPixelColor(0,255,102,0); // orange for WTF Wifi
+		strip.show();
+		Serial.println("Wifi WTF Dead");
+		while(1);
 	}
 	strip.setPixelColor(0,255,222,0); // yellow while waiting on DHCP
 	strip.show();
+	Serial.println("Wifi Found, Seeking DHCP...");
 	while (!cc3000.checkDHCP()) {
-    	delay(100); // idle till DCHP is delivered
-	}
+		delay(100); // idle till DCHP is delivered
+  }
 	strip.setPixelColor(0,0,255,0); // green for DHCP Found
 	strip.show();
+	Serial.println("DHCP Found.");
 }
  
 void loop () {
@@ -106,11 +111,13 @@ void sparkle(int color) {
 int getCheerLightsColor(int color) {
 	strip.setPixelColor(0,0,0,0); // go black on first pixel to show something happening
 	strip.show();
+	Serial.println("Checking for color...");
 	if (!cc3000.checkConnected()) {
 		// get back on Wifi
 		strip.setPixelColor(0,255,0,0); // Red for Wifi Restarting...
-      	strip.show();
-      	delay(500);
+		Serial.println("Reconnecting to Wifi network...");
+		strip.show();
+		delay(500);
 		cc3000.reboot();
 		delay(500);
 		strip.setPixelColor(0,255,150,0); // Orange for successful reboot.
@@ -122,27 +129,27 @@ int getCheerLightsColor(int color) {
 		strip.setPixelColor(0,255,255,102); // bright yellow for DHCP
 		strip.show();
 		while (!cc3000.checkDHCP()) {
-      		strip.setPixelColor(0,255,102,0);
-      		strip.show();
-    		delay(50); // idle till DCHP is delivered
-    		strip.setPixelColor(0,255,0,0);
-    		strip.show();
-    		delay(50);
+			strip.setPixelColor(0,255,102,0);
+			strip.show();
+			delay(100); // idle till DCHP is delivered
 		}
 	}
 	while (ip == 0) {
 		if (! cc3000.getHostByName(WEBSITE, &ip)) {
-      		strip.setPixelColor(0,255,0,0); // can't resolve ip addy
-      		strip.show();
+			strip.setPixelColor(0,255,0,0); // can't resolve ip addy
+			strip.show();
 		}
-    	delay(500); // wait and try again.
+		Serial.println("DNS resolving...");
+		delay(500); // wait and try again.
 	}
 	strip.setPixelColor(0,0,200,0); // green for IP found
 	strip.show();
 	Adafruit_CC3000_Client www = cc3000.connectTCP(ip, 80);
+	Serial.println("Connecting...");
 	if (www.connected()) {
 		strip.setPixelColor(0,0,0,200); // connected, fetching data
 		strip.show();
+		Serial.println("Sending request...");
 		www.fastrprint(F("GET "));
 		www.fastrprint(WEBPAGE);
 		www.fastrprint(F(" HTTP/1.1\r\n"));
@@ -152,12 +159,14 @@ int getCheerLightsColor(int color) {
 		www.fastrprint(F("\r\n"));
 		www.println();
 	} else {
+		Serial.println("Connection Waiting...");
 		strip.setPixelColor(0,255,102,0); // orange for waiting on connection
 		strip.show();
 	}
 	/* Read data until either the connection is closed, or the idle timeout is reached. */ 
 	unsigned long lastRead = millis();
 	String response = String("");
+	Serial.println("Receiving..");
 	while (www.connected() && (millis() - lastRead < IDLE_TIMEOUT_MS)) {
 		char headerBreak[] = { 13, 10 }; // what separates http header from body, \r\n
 		char prevChar[4]; // buffer of characters to compare with the headerbreak characters
@@ -187,10 +196,12 @@ int getCheerLightsColor(int color) {
 	}
 	strip.setPixelColor(0,0,0,0); // all done with data fetch
 	strip.show();
+	Serial.println("Data received, processing...");
 	if (sizeof(response) < 49) { // if the response buffer is huge, then it was an error page.
 		int newColor = processLightCommand(response); // Send the http response body content over to parse for a color
 		color = newColor;
 	}
+	Serial.println("Closing connection.");
 	www.close(); // this is important: only 3 connections at once.
 	//cc3000.disconnect();  // no, don't wanna disconnect from wifi.
 	return (color);
@@ -244,16 +255,13 @@ int processLightCommand(String &response) {
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
 uint32_t Wheel(byte WheelPos, float opacity) {
-  
-  if(WheelPos < 85) {
-    return strip.Color((WheelPos * 3) * opacity, (255 - WheelPos * 3) * opacity, 0);
-  } 
-  else if(WheelPos < 170) {
-    WheelPos -= 85;
-    return strip.Color((255 - WheelPos * 3) * opacity, 0, (WheelPos * 3) * opacity);
-  } 
-  else {
-    WheelPos -= 170;
-    return strip.Color(0, (WheelPos * 3) * opacity, (255 - WheelPos * 3) * opacity);
-  }
+	if(WheelPos < 85) {
+		return strip.Color((WheelPos * 3) * opacity, (255 - WheelPos * 3) * opacity, 0);
+	} else if(WheelPos < 170) {
+		WheelPos -= 85;
+		return strip.Color((255 - WheelPos * 3) * opacity, 0, (WheelPos * 3) * opacity);
+ 	} else {
+		WheelPos -= 170;
+		return strip.Color(0, (WheelPos * 3) * opacity, (255 - WheelPos * 3) * opacity);
+	}
 }
